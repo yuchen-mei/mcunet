@@ -9,6 +9,9 @@ from mcunet.utils.det_helper import MergeNMS, Yolo3Output
 
 from mcunet.model_zoo import download_tflite
 
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
+
 os.environ['CUDA_VISIBLE_DEVICES'] = '-1'  # use only cpu for tf-lite evaluation
 
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
@@ -89,6 +92,11 @@ if __name__ == '__main__':
 
     # get input & output tensors
     input_details = interpreter.get_input_details()
+    input_dtype = input_details[0]['dtype']
+    print(f"Input DataType: {input_dtype}")  # Print the datatype of the input
+    for tensor_details in interpreter.get_tensor_details():
+        print(f"Tensor Name: {tensor_details['name']}, DataType: {tensor_details['dtype']}")  # Print the datatype of all tensors in the model
+
     output_details = interpreter.get_output_details()
 
     input_shape = input_details[0]['shape']

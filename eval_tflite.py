@@ -58,9 +58,26 @@ def eval_image(data):
     image = image.permute(0, 2, 3, 1)
     image_np = image.cpu().numpy()
     image_np = (image_np * 255 - 128).astype(np.int8)
+
+    # # Dump input
+    # np.save("input.npy", image_np.reshape(*input_shape))
+
     interpreter.set_tensor(
         input_details[0]['index'], image_np.reshape(*input_shape))
     interpreter.invoke()
+
+    # Dump activations, skip tensors with null data
+    for tensor_details in interpreter.get_tensor_details():
+        try:
+            tensor = interpreter.get_tensor(tensor_details['index'])
+        except ValueError:
+            # This tensor's data is not allocated, skip it
+            continue  # Move on to the next tensor
+
+        # If no ValueError, save the tensor's data
+        safe_tensor_name = tensor_details['name'].replace('/', '_').replace(':', '_')
+        np.save(f"activation_{safe_tensor_name}.npy", tensor)
+
     output_data = interpreter.get_tensor(
         output_details[0]['index'])
     output = torch.from_numpy(output_data).view(1, -1)
@@ -72,6 +89,14 @@ if __name__ == '__main__':
     tflite_path = download_tflite(net_id=args.net_id)
     interpreter = tf.lite.Interpreter(tflite_path)
     interpreter.allocate_tensors()
+
+    # # Dump weights
+    # for tensor_details in interpreter.get_tensor_details():
+    #     if 'quantization' in tensor_details and tensor_details['quantization'] != (0, 0):  # Adjust this condition as needed
+    #         tensor = interpreter.get_tensor(tensor_details['index'])
+    #         # Replace slashes and other potentially problematic characters in the tensor name
+    #         safe_tensor_name = tensor_details['name'].replace('/', '_').replace(':', '_')
+    #         np.save(f"weights_{safe_tensor_name}.npy", tensor)
 
     # get input & output tensors
     input_details = interpreter.get_input_details()

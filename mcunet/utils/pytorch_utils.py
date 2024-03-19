@@ -44,7 +44,13 @@ def count_net_flops(model, data_shape):
     from torchprofile import profile_macs
     model = copy.deepcopy(model)
     rm_bn_from_net(model)  # remove bn since it is eventually fused
-    total_macs = profile_macs(model, torch.randn(*data_shape).to(get_net_device(model)))
+    
+    # Convert input tensor to bfloat16 if model weights are in bfloat16 format
+    input_tensor = torch.randn(*data_shape).to(get_net_device(model))
+    if next(model.parameters()).dtype == torch.bfloat16:
+        input_tensor = input_tensor.bfloat16()
+
+    total_macs = profile_macs(model, input_tensor)
     del model
     return total_macs
 
