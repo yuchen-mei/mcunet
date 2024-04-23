@@ -42,3 +42,7 @@ python3 eval_torch.py --net_id mcunet-vww2 --dataset vww --data-dir ./vww-s256/v
 
 # int8
 # python3 eval_tflite.py --net_id mcunet-in4 --dataset imagenet --data-dir ./imagenet/val
+
+# single image
+python3 eval_single.py --net_id mcunet-in4 --fuse-bn --bfloat16
+python3 eval_single.py --net_id mcunet-in4 --bfloat16
